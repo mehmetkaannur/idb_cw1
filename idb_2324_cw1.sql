@@ -1,6 +1,10 @@
 -- Q1 returns (name,born_in,father,mother)
-
-;
+SELECT p1.name, p1.born_in, p2.father, p3.mother
+FROM person p1
+JOIN person p2 ON p1.father = p2.name
+JOIN person p3 ON p1.mother = p3.name
+WHERE p1.born_in = p2.born_in = p3.born_in
+ORDER BY name;
 
 -- Q2 returns (name)
 

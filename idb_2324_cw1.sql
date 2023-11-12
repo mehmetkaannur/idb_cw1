@@ -110,7 +110,7 @@ FROM monarch
 LEFT JOIN prime_minister ON (prime_minister.entry >= monarch.accession AND prime_minister.entry < COALESCE((SELECT MIN(accession) 
 FROM monarch m2 
 WHERE m2.accession > monarch.accession), CURRENT_DATE)) OR (prime_minister.entry < monarch.accession AND COALESCE((SELECT MIN(entry) 
-FROM prime_minister p2 WHERE p2.entry > prime_minister.entry), GETDATE()) > monarch.accession) 
+FROM prime_minister p2 WHERE p2.entry > prime_minister.entry), CURRENT_DATE) > monarch.accession) 
 ORDER BY monarch.name, prime_minister.name;
 
 -- Q10 returns (name,entry,period,days)

@@ -105,29 +105,13 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-WITH MonarchTerm AS (
-    SELECT
-        m.name AS monarch_name,
-        m.accession AS monarch_accession,
-        COALESCE(MIN(m_next.accession), NULL) AS next_monarch_accession
-    FROM monarch m
-    LEFT JOIN monarch m_next ON m.accession < m_next.accession
-    GROUP BY m.name, m.accession
-)
-, PrimeMinisterTerm AS (
-    SELECT
-        pm.name AS prime_minister_name,
-        pm.entry AS prime_minister_entry,
-        COALESCE(MIN(pm_next.entry), NULL) AS next_prime_minister_entry
-    FROM prime_minister pm
-    LEFT JOIN prime_minister pm_next ON pm.entry < pm_next.entry
-    GROUP BY pm.name, pm.entry
-)
-SELECT mt.monarch_name, pmt.prime_minister_name
-FROM MonarchTerm mt
-JOIN PrimeMinisterTerm pmt ON (pmt.prime_minister_entry >= mt.monarch_accession AND pmt.prime_minister_entry < mt.next_monarch_accession)
-                           OR (pmt.prime_minister_entry >= mt.monarch_accession AND mt.next_monarch_accession IS NULL)
-ORDER BY mt.monarch_name, pmt.prime_minister_name;
+SELECT monarch.name AS monarch, prime_minister.name AS prime_minister 
+FROM monarch 
+LEFT JOIN prime_minister ON (prime_minister.entry >= monarch.accession AND prime_minister.entry < COALESCE((SELECT MIN(accession) 
+FROM monarch m2 
+WHERE m2.accession > monarch.accession), GETDATE())) OR (prime_minister.entry < monarch.accession AND COALESCE((SELECT MIN(entry) 
+FROM prime_minister p2 WHERE p2.entry > prime_minister.entry), GETDATE()) > monarch.accession) 
+ORDER BY monarch.name, prime_minister.name;
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS

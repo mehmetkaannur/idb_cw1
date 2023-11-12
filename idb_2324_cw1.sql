@@ -40,7 +40,7 @@ FROM monarch
 WHERE house IS NOT NULL
 UNION
 SELECT monarch.name, 'Lord Protector' AS role, monarch.accession AS start_date
-FROM monarchb
+FROM monarch
 WHERE house IS NULL
 UNION
 SELECT prime_minister.name, 'Prime Minister' AS role, prime_minister.entry AS start_date

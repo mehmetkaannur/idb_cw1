@@ -20,7 +20,8 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-WITH KingsAndQueens AS (
+WITH KingsAndQueens AS 
+(
   SELECT p.name, p.dod, m.accession, m.house
   FROM person p RIGHT JOIN monarch m
   ON p.name = m.name
@@ -28,7 +29,8 @@ WITH KingsAndQueens AS (
 )
 SELECT kaq1.name
 FROM KingsAndQueens kaq1
-WHERE EXISTS (
+WHERE EXISTS 
+(
   SELECT 1
   FROM KingsAndQueens kaq2
   WHERE kaq2.accession > kaq1.accession
@@ -39,7 +41,8 @@ ORDER BY kaq1.name;
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
-WHERE accession = ALL(
+WHERE accession = ALL
+(
     SELECT MIN(m2.accession)
     FROM monarch m2
     WHERE m2.house = m1.house
@@ -116,9 +119,9 @@ DayCounter AS
   SELECT name, party, entry, term_end, 
   CASE 
     WHEN term_end IS NULL THEN
-      CAST(CURRENT_DATE) - CAST(entry)
+      CAST(CURRENT_DATE AS date) - CAST(entry AS date)
     ELSE
-      CAST(term_end) - CAST(entry
+      CAST(term_end AS date) - CAST(entry AS date)
   END AS days
   FROM EndOfTerm
 ),

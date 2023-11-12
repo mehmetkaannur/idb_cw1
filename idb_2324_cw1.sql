@@ -21,6 +21,7 @@ ORDER BY person.name;
 
 -- Q3 returns (name)
 
+;
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
@@ -34,8 +35,17 @@ WHERE accession = ALL
 ORDER BY accession;
 
 -- Q5 returns (name,role,start_date)
-
-;
+SELECT monarch.name, 'Monarch' AS role, monarch.accession AS start_date
+FROM monarch
+WHERE house IS NOT NULL
+UNION
+SELECT monarch.name, 'Lord Protector' AS role, monarch.accession AS start_date
+FROM monarchb
+WHERE house IS NULL
+UNION
+SELECT prime_minister.name, 'Prime Minister' AS role, prime_minister.entry AS start_date
+FROM prime_minister
+ORDER BY start_date;
 
 -- Q6 returns (first_name,popularity)
 

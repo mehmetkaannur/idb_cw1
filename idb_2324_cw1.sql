@@ -20,12 +20,21 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT m.name
-FROM monarch m
-WHERE m.name <> (SELECT MAX(name) FROM monarch)
-AND NOT EXISTS (SELECT 1 FROM monarch s WHERE s.house = m.house AND s.accession > m.accession)
-ORDER BY m.name;
-
+WITH KingsAndQueens AS (
+  SELECT p.name, p.dod, m.accession, m.house
+  FROM person p RIGHT JOIN monarch m
+  ON p.name = m.name
+  WHERE m.house IS NOT NULL
+)
+SELECT m1.name
+FROM KingsAndQueens m1
+WHERE EXISTS (
+  SELECT 1
+  FROM KingsAndQueens m2
+  WHERE m2.accession > m1.accession
+  AND m2.accession < m1.dod
+)
+ORDER BY m1.name;
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
@@ -79,17 +88,17 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-WITH mother_child AS (
+WITH MotherAndChild AS (
   SELECT person.mother AS mother, person.name AS child, person.dob AS dob
   FROM person
   WHERE person.mother IS NOT NULL
 )
-SELECT mother_child.mother, mother_child.child, RANK() OVER (PARTITION BY mother_child.mother ORDER BY mother_child.dob) AS born
-FROM mother_child
+SELECT MotherAndChild.mother, MotherAndChild.child, RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
+FROM MotherAndChild
 UNION
 SELECT person.name AS mother, NULL AS child, NULL AS born
 FROM person
-WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM mother_child)
+WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndChild)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
@@ -102,31 +111,5 @@ JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(
 ORDER BY m.accession, p.entry;
        
 -- Q10 returns (name,entry,period,days)
-WITH current_date AS (
-  SELECT DATE '2023-11-12' AS today
-),
-next_entry AS (
-  SELECT p1.name, p1.entry, MIN(p2.entry) AS next_entry
-  FROM prime_minister p1
-  LEFT JOIN prime_minister p2
-  ON p1.name <> p2.name AND p1.entry < p2.entry
-  GROUP BY p1.name, p1.entry
-),
-days_in_office AS 
-(
-  SELECT n.name, n.entry, n.next_entry, 
-  CASE
-    WHEN n.next_entry IS NULL THEN c.today - n.entry -- Current prime minister
-    ELSE n.next_entry - n.entry -- Previous prime ministers
-  END AS days
-  FROM next_entry n
-  CROSS JOIN current_date c
-),
-periods AS (
-  SELECT d.name, d.entry, d.days, 
-  ROW_NUMBER() OVER (PARTITION BY d.name ORDER BY d.entry) AS period
-  FROM days_in_office d
-)
-SELECT p.name, p.entry, p.period, p.days
-FROM periods p
-ORDER BY p.days;
+
+;

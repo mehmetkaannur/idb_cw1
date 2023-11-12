@@ -123,5 +123,25 @@ OR (p.entry < m.accession AND p.exit > m.succession)
 ORDER BY m.accession, p.entry;
 
 -- Q10 returns (name,entry,period,days)
-
-;
+WITH term_end AS (
+  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS end
+  FROM prime_minister
+),
+term_days AS (
+  SELECT name, party, entry, end, 
+  CASE 
+    WHEN end IS NULL THEN
+      DATE_PART('day', CURRENT_DATE - entry)
+    ELSE
+      DATE_PART('day', end - entry)
+  END AS days
+  FROM term_end
+),
+term_period AS (
+  SELECT name, party, entry, end, days, 
+  ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
+  FROM term_days
+)
+SELECT name, entry, period, days
+FROM term_period
+ORDER BY days ASC

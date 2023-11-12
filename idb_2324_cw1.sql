@@ -139,7 +139,8 @@ DayCounter AS
   END AS days
   FROM EndOfTerm
 ),
-PeriodCounter AS (
+PeriodCounter AS 
+(
   SELECT name, party, entry, term_end, days, 
   ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
   FROM DayCounter

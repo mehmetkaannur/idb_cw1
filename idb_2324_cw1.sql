@@ -94,14 +94,25 @@ JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(m.coronation, 
 ORDER BY m.name, p.entry;
        
 -- Q10 returns (name,entry,period,days)
+WITH durations AS 
+(
+   SELECT
+      p.name, 
+      p.entry,
+      (CAST(CURRENT_DATE AS DATE) - CAST(p.entry AS DATE)) AS days,
+      ROW_NUMBER() OVER (PARTITION BY p.name ORDER BY p.entry ASC) AS period
+   FROM prime_minister p
+),
+current AS (
+   SELECT p.name, p.entry
+   FROM prime_minister p
+   WHERE NOT EXISTS (SELECT 1 FROM prime_minister p2 WHERE p2.entry > p.entry)
+)
 SELECT
-  pm.name,
-  pm.party,
-  pm.entry,
-  ROW_NUMBER() OVER (PARTITION BY pm.name ORDER BY pm.entry) AS period,
-  COALESCE(pm2.entry, CURRENT_DATE) AS end_date,
-  TIMESTAMPDIFF(DAY, pm.entry, COALESCE(pm2.entry, CURRENT_DATE)) AS days
-FROM
-  prime_minister pm
-  LEFT JOIN prime_minister pm2 ON pm.name = pm2.name AND pm.entry < pm2.entry
-ORDER BY days;
+   c.name,
+   c.entry,
+   c.period,
+   COALESCE(d.days, (CAST(CURRENT_DATE AS DATE) - CAST(c.entry AS DATE))) AS days
+FROM current c
+LEFT JOIN durations d ON c.name = d.name AND c.entry = d.entry
+ORDER BY days ASC;

@@ -102,25 +102,8 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-WITH monarchs AS 
-(
-  SELECT m1.name AS monarch, m1.accession, COALESCE(m2.accession, CURRENT_DATE) AS succession
-  FROM monarch m1 LEFT JOIN monarch m2 ON m1.name <> m2.name AND m1.accession < m2.accession
-  GROUP BY m1.name, m1.accession, m2.accession
-  HAVING m2.accession IS NULL OR m2.accession = MIN(m2.accession)
-)
-, prime_ministers AS 
-(
-  SELECT p1.name AS prime_minister, p1.party, p1.entry, COALESCE(p2.entry, CURRENT_DATE) AS exit
-  FROM prime_minister p1 LEFT JOIN prime_minister p2 ON p1.name <> p2.name AND p1.entry < p2.entry
-  GROUP BY p1.name, p1.party, p1.entry, p2.entry
-  HAVING p2.entry IS NULL OR p2.entry = MIN(p2.entry)
-)
-SELECT m.monarch, p.prime_minister, p.party
-FROM monarchs m JOIN prime_ministers p ON p.entry BETWEEN m.accession AND m.succession
-OR p.exit BETWEEN m.accession AND m.succession
-OR (p.entry < m.accession AND p.exit > m.succession)
-ORDER BY m.accession, p.entry;
+
+;
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS
@@ -133,9 +116,9 @@ DayCounter AS
   SELECT name, party, entry, term_end, 
   CASE 
     WHEN term_end IS NULL THEN
-      CAST(CURRENT_DATE AS date) - CAST(entry AS date)
+      CAST(CURRENT_DATE) - CAST(entry)
     ELSE
-      CAST(term_end AS date) - CAST(entry AS date)
+      CAST(term_end) - CAST(entry
   END AS days
   FROM EndOfTerm
 ),

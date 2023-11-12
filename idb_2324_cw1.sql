@@ -59,8 +59,20 @@ FROM NameAndPopularity nap
 ORDER BY nap.popularity DESC, nap.first_name;
 
 -- Q7 returns (party,seventeenth,eighteenth,nineteenth,twentieth,twentyfirst)
-
-; 
+WITH PartyCounter AS 
+(
+  SELECT
+    party,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1700 AND 1799) AS eighteenth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1800 AND 1899) AS nineteenth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1900 AND 1999) AS twentieth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 2000 AND 2099) AS twentyfirst
+  FROM prime_minister
+  GROUP BY party
+)
+SELECT pc.party, pc.eighteenth, pc.nineteenth, pc.twentieth, pc.twentyfirst
+FROM PartyCounter pc
+ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
 

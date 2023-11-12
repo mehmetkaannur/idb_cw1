@@ -20,15 +20,14 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT DISTINCT m1.name
+SELECT m1.name
 FROM monarch m1
-JOIN monarch m2 ON 
-(
-    m1.accession < m2.accession
-               AND (m1.coronation IS NULL OR m1.coronation < m2.accession)
-               AND (m1.dod IS NULL OR m1.dod < m2.accession)
-)
+JOIN monarch m2 ON m1.name = m2.name
+LEFT JOIN person p1 ON m1.name = p1.name
+LEFT JOIN person p2 ON m2.name = p2.name
+WHERE m1.accession < m2.accession AND p1.dod > m2.accession
 ORDER BY m1.name;
+
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession

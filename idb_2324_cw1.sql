@@ -50,7 +50,7 @@ ORDER BY start_date;
 -- Q6 returns (first_name,popularity)
 WITH NameAndPopularity AS 
 (
-  SELECT TRIM(SPLIT_PART(name, ' ', 1)) AS first_name, COUNT(*) AS popularity
+  SELECT SPLIT_PART(name, ' ', 1) AS first_name, COUNT(*) AS popularity
   FROM person
   GROUP BY first_name HAVING COUNT(*) > 1
 )
@@ -67,11 +67,8 @@ ORDER BY nap.popularity DESC, nap.first_name;
 ;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT m.name AS monarch, pm.name AS prime_minister
-FROM monarch m
-LEFT JOIN prime_minister pm ON pm.entry BETWEEN m.accession AND COALESCE((SELECT MIN(accession) FROM monarch WHERE accession > m.accession), CURRENT_DATE)
-ORDER BY m.name, pm.name;
 
+;
        
 -- Q10 returns (name,entry,period,days)
 

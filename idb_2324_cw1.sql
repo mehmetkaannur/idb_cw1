@@ -108,8 +108,9 @@ ORDER BY mother, born, child;
 SELECT monarch.name, prime_minister.name
 FROM monarch
 INNER JOIN prime_minister ON monarch.accession <= prime_minister.entry 
-AND prime_minister.entry < COALESCE(monarch.succession, CURRENT_DATE)
+AND prime_minister.entry < COALESCE(monarch.dod, CURRENT_DATE)
 ORDER BY monarch.name, prime_minister.name;
+
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS

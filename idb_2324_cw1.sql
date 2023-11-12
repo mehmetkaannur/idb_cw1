@@ -23,7 +23,7 @@ ORDER BY person.name;
 
 
 -- Q4 returns (house,name,accession)
-SELECT house, name, accession
+SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
 WHERE accession = ALL 
 (

@@ -124,21 +124,21 @@ ORDER BY m.accession, p.entry;
 
 -- Q10 returns (name,entry,period,days)
 WITH term_end AS (
-  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS end
+  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS endterm
   FROM prime_minister
 ),
 term_days AS (
-  SELECT name, party, entry, end, 
+  SELECT name, party, entry, endterm, 
   CASE 
-    WHEN end IS NULL THEN
+    WHEN endterm IS NULL THEN
       DATE_PART('day', CURRENT_DATE - entry)
     ELSE
-      DATE_PART('day', end - entry)
+      DATE_PART('day', endterm - entry)
   END AS days
   FROM term_end
 ),
 term_period AS (
-  SELECT name, party, entry, end, days, 
+  SELECT name, party, entry, endterm, days, 
   ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
   FROM term_days
 )

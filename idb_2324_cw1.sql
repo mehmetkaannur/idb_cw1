@@ -77,14 +77,10 @@ ORDER BY pc.party;
 -- Q8 returns (mother,child,born)
 SELECT mother.name AS mother,
        child.name AS child,
-       COALESCE((SELECT COUNT(*)
-                 FROM person AS c
-                 WHERE c.mother = mother.name AND c.gender = 'F' AND c.dob <= child.dob), 0) AS born
+       ROW_NUMBER() OVER (PARTITION BY mother.name ORDER BY child.dob) AS born
 FROM person AS mother
-LEFT JOIN person AS child ON mother.name = child.mother
-WHERE mother.gender = 'F'
+LEFT JOIN person AS child ON mother.name = child.mother AND mother.gender = 'F'
 ORDER BY mother.name, born, child.dob, child.name;
-
 
 -- Q9 returns (monarch,prime_minister)
 

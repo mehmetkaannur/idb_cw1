@@ -20,12 +20,12 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-select m.name
-from monarch m
-join person p on m.name = p.name
-join monarch n on m.house = n.house and m.accession < n.accession
-where p.dod > n.accession
-order by m.name;
+SELECT m.name
+FROM monarch m
+WHERE m.name <> (SELECT MAX(name) FROM monarch)
+AND NOT EXISTS (SELECT 1 FROM monarch s WHERE s.house = m.house AND s.accession > m.accession)
+ORDER BY m.name;
+
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
@@ -79,13 +79,47 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-
-;
+SELECT m.name AS mother, c.name AS child, 
+COALESCE (ROW_NUMBER () OVER (PARTITION BY m.name ORDER BY c.dob), 0) AS born
+FROM person m LEFT JOIN person c ON m.name = c.mother
+WHERE m.gender = 'F'
+ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-
-;
+SELECT m.name AS monarch, p.name AS prime_minister
+FROM monarch m
+JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(
+  (SELECT accession FROM monarch m2 WHERE m2.accession > m.accession ORDER BY accession LIMIT 1),
+  CURRENT_DATE
+)
+ORDER BY m.accession, p.entry;
        
 -- Q10 returns (name,entry,period,days)
-
-;
+WITH current_date AS (
+  SELECT DATE '2023-11-12' AS today
+),
+next_entry AS (
+  SELECT p1.name, p1.entry, MIN(p2.entry) AS next_entry
+  FROM prime_minister p1
+  LEFT JOIN prime_minister p2
+  ON p1.name <> p2.name AND p1.entry < p2.entry
+  GROUP BY p1.name, p1.entry
+),
+days_in_office AS 
+(
+  SELECT n.name, n.entry, n.next_entry, 
+  CASE
+    WHEN n.next_entry IS NULL THEN c.today - n.entry -- Current prime minister
+    ELSE n.next_entry - n.entry -- Previous prime ministers
+  END AS days
+  FROM next_entry n
+  CROSS JOIN current_date c
+),
+periods AS (
+  SELECT d.name, d.entry, d.days, 
+  ROW_NUMBER() OVER (PARTITION BY d.name ORDER BY d.entry) AS period
+  FROM days_in_office d
+)
+SELECT p.name, p.entry, p.period, p.days
+FROM periods p
+ORDER BY p.days;

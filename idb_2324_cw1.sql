@@ -7,15 +7,9 @@ WHERE p1.born_in = p2.born_in AND p1.born_in = p3.born_in
 ORDER BY p1.name;
 
 -- Q2 returns (name)
-SELECT person.name
-FROM person
-EXCEPT
-SELECT DISTINCT monarch.name
-FROM monarch
-UNION
-SELECT DISTINCT prime_minister.name
-FROM prime_minister.name
-ORDER BY person.name
+SELECT p1.name
+FROM person p1
+WHERE p1.name NOT IN (SELECT r.name FROM prime_minister r UNION SELECT m.name FROM monarch m);
 ;
 
 -- Q3 returns (name)

@@ -62,7 +62,7 @@ ORDER BY start_date;
 -- Q9 returns (monarch,prime_minister)
 SELECT m.name AS monarch, p.name AS prime_minister
 FROM monarch m
-JOIN prime_minister p ON p.entry = (SELECT MIN(entry) FROM prime_minister WHERE entry >= m.accession)
+LEFT JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(m.death, CURRENT_DATE)
 ORDER BY m.name, p.name;
        
 -- Q10 returns (name,entry,period,days)

@@ -77,10 +77,14 @@ ORDER BY pc.party;
 -- Q8 returns (mother,child,born)
 SELECT mother.name AS mother,
        child.name AS child,
-       (SELECT COUNT(*)
-        FROM person AS c
-        WHERE c.mother = mother.name AND c.gender = 'F'
-              AND c.dob <= child.dob) AS born
+       CASE WHEN (SELECT COUNT(*)
+                  FROM person AS c
+                  WHERE c.mother = mother.name AND c.gender = 'F' AND c.dob <= child.dob) = 0
+            THEN NULL
+            ELSE (SELECT COUNT(*)
+                  FROM person AS c
+                  WHERE c.mother = mother.name AND c.gender = 'F' AND c.dob <= child.dob)
+       END AS born
 FROM person AS mother
 LEFT JOIN person AS child ON mother.name = child.mother
 WHERE mother.gender = 'F'

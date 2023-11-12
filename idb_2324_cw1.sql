@@ -123,25 +123,27 @@ OR (p.entry < m.accession AND p.exit > m.succession)
 ORDER BY m.accession, p.entry;
 
 -- Q10 returns (name,entry,period,days)
-WITH term_end AS (
-  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS endterm
+WITH EndOfTerm AS
+(
+  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS term_end
   FROM prime_minister
 ),
-term_days AS (
-  SELECT name, party, entry, endterm, 
+DayCounter AS 
+(
+  SELECT name, party, entry, term_end, 
   CASE 
-    WHEN endterm IS NULL THEN
+    WHEN term_end IS NULL THEN
       CAST(CURRENT_DATE AS date) - CAST(entry AS date)
     ELSE
-      CAST(endterm AS date) - CAST(entry AS date)
+      CAST(term_end AS date) - CAST(entry AS date)
   END AS days
-  FROM term_end
+  FROM EndOfTerm
 ),
-term_period AS (
-  SELECT name, party, entry, endterm, days, 
+PeriodCounter AS (
+  SELECT name, party, entry, term_end, days, 
   ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
-  FROM term_days
+  FROM DayCounter
 )
 SELECT name, entry, period, days
-FROM term_period
-ORDER BY days ASC
+FROM PeriodCounter
+ORDER BY days;

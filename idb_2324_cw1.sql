@@ -26,21 +26,20 @@ WITH KingsAndQueens AS (
   ON p.name = m.name
   WHERE m.house IS NOT NULL
 )
-SELECT m1.name
-FROM KingsAndQueens m1
+SELECT kaq1.name
+FROM KingsAndQueens kaq1
 WHERE EXISTS (
   SELECT 1
-  FROM KingsAndQueens m2
-  WHERE m2.accession > m1.accession
-  AND m2.accession < m1.dod
+  FROM KingsAndQueens kaq2
+  WHERE kaq2.accession > kaq1.accession
+  AND kaq2.accession < kaq1.dod
 )
-ORDER BY m1.name;
+ORDER BY kaq1.name;
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
-WHERE accession = ALL 
-(
+WHERE accession = ALL(
     SELECT MIN(m2.accession)
     FROM monarch m2
     WHERE m2.house = m1.house
@@ -93,7 +92,8 @@ WITH MotherAndChild AS (
   FROM person
   WHERE person.mother IS NOT NULL
 )
-SELECT MotherAndChild.mother, MotherAndChild.child, RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
+SELECT MotherAndChild.mother, MotherAndChild.child, 
+RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
 FROM MotherAndChild
 UNION
 SELECT person.name AS mother, NULL AS child, NULL AS born
@@ -102,14 +102,26 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT m.name AS monarch, p.name AS prime_minister
-FROM monarch m
-JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(
-  (SELECT accession FROM monarch m2 WHERE m2.accession > m.accession ORDER BY accession LIMIT 1),
-  CURRENT_DATE
+WITH monarchs AS 
+(
+  SELECT m1.name AS monarch, m1.accession, COALESCE(m2.accession, CURRENT_DATE) AS succession
+  FROM monarch m1 LEFT JOIN monarch m2 ON m1.name <> m2.name AND m1.accession < m2.accession
+  GROUP BY m1.name, m1.accession, m2.accession
+  HAVING m2.accession IS NULL OR m2.accession = MIN(m2.accession)
 )
+, prime_ministers AS 
+(
+  SELECT p1.name AS prime_minister, p1.party, p1.entry, COALESCE(p2.entry, CURRENT_DATE) AS exit
+  FROM prime_minister p1 LEFT JOIN prime_minister p2 ON p1.name <> p2.name AND p1.entry < p2.entry
+  GROUP BY p1.name, p1.party, p1.entry, p2.entry
+  HAVING p2.entry IS NULL OR p2.entry = MIN(p2.entry)
+)
+SELECT m.monarch, p.prime_minister, p.party
+FROM monarchs m JOIN prime_ministers p ON p.entry BETWEEN m.accession AND m.succession
+OR p.exit BETWEEN m.accession AND m.succession
+OR (p.entry < m.accession AND p.exit > m.succession)
 ORDER BY m.accession, p.entry;
-       
+
 -- Q10 returns (name,entry,period,days)
 
 ;

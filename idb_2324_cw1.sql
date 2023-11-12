@@ -79,10 +79,17 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-SELECT m.name AS mother, c.name AS child, 
-COALESCE (ROW_NUMBER () OVER (PARTITION BY m.name ORDER BY c.dob), 0) AS born
-FROM person m LEFT JOIN person c ON m.name = c.mother
-WHERE m.gender = 'F'
+WITH mother_child AS (
+  SELECT person.mother AS mother, person.name AS child, person.dob AS dob
+  FROM person
+  WHERE person.mother IS NOT NULL
+)
+SELECT mother_child.mother, mother_child.child, RANK() OVER (PARTITION BY mother_child.mother ORDER BY mother_child.dob) AS born
+FROM mother_child
+UNION
+SELECT person.name AS mother, NULL AS child, NULL AS born
+FROM person
+WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM mother_child)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)

@@ -131,9 +131,9 @@ term_days AS (
   SELECT name, party, entry, endterm, 
   CASE 
     WHEN endterm IS NULL THEN
-      DATE_PART('day', CURRENT_DATE - entry)
+      CAST(CURRENT_DATE AS date) - CAST(entry AS date)
     ELSE
-      DATE_PART('day', endterm - entry)
+      CAST(endterm AS date) - CAST(entry AS date)
   END AS days
   FROM term_end
 ),

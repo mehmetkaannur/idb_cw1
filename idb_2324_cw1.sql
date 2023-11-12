@@ -109,7 +109,7 @@ SELECT monarch.name AS monarch, prime_minister.name AS prime_minister
 FROM monarch 
 LEFT JOIN prime_minister ON (prime_minister.entry >= monarch.accession AND prime_minister.entry < COALESCE((SELECT MIN(accession) 
 FROM monarch m2 
-WHERE m2.accession > monarch.accession), GETDATE())) OR (prime_minister.entry < monarch.accession AND COALESCE((SELECT MIN(entry) 
+WHERE m2.accession > monarch.accession), CURRENT_DATE)) OR (prime_minister.entry < monarch.accession AND COALESCE((SELECT MIN(entry) 
 FROM prime_minister p2 WHERE p2.entry > prime_minister.entry), GETDATE()) > monarch.accession) 
 ORDER BY monarch.name, prime_minister.name;
 

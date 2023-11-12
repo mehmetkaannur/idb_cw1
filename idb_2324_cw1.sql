@@ -48,8 +48,15 @@ FROM prime_minister
 ORDER BY start_date;
 
 -- Q6 returns (first_name,popularity)
-
-;
+WITH NameAndPopularity AS 
+(
+  SELECT TRIM(SPLIT_PART(name, ' ', 1)) AS first_name, COUNT(*) AS popularity
+  FROM person
+  GROUP BY first_name HAVING COUNT(*) > 1
+)
+SELECT nap.first_name, nap.popularity
+FROM NameAndPopularity nap
+ORDER BY nap.popularity DESC, nap.first_name;
 
 -- Q7 returns (party,seventeenth,eighteenth,nineteenth,twentieth,twentyfirst)
 

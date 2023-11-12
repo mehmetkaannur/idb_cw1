@@ -9,12 +9,22 @@ ORDER BY p1.name;
 -- Q2 returns (name)
 SELECT person.name
 FROM person
-WHERE person.name NOT IN (SELECT prime_minister.name FROM prime_minister UNION SELECT monarch.name FROM monarch)
+WHERE person.name NOT IN 
+(
+    SELECT prime_minister.name 
+    FROM prime_minister 
+    UNION 
+    SELECT monarch.name 
+    FROM monarch
+)
 ORDER BY person.name;
 
 -- Q3 returns (name)
-
-;
+SELECT monarch.name
+FROM monarch
+WHERE accession IS NOT NULL 
+  AND accession <> coronation
+ORDER BY monarch.name;
 
 -- Q4 returns (house,name,accession)
 

@@ -20,12 +20,8 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT p.name
-FROM person p
-INNER JOIN monarch m ON p.name = m.name
-LEFT JOIN monarch m_next ON m.accession < m_next.accession
-WHERE p.dod IS NULL OR p.dod > m_next.accession
-ORDER BY p.name;
+
+;
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
@@ -79,32 +75,13 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-SELECT
-  mother.name AS mother,
-  child.name AS child,
-  COUNT(*) OVER (PARTITION BY mother.name ORDER BY child.dob ASC) AS born
-FROM person mother
-LEFT JOIN person child ON mother.name = child.mother
-GROUP BY mother.name, child.name
-ORDER BY mother.name ASC, born ASC;
 
+;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT m.name AS monarch, p.name AS prime_minister
-FROM
-  monarch m
-  INNER JOIN prime_minister p ON m.accession <= p.entry AND (m.successor IS NULL OR m.successor > p.entry)
-ORDER BY m.name ASC, p.name ASC;
 
+;
        
 -- Q10 returns (name,entry,period,days)
-SELECT
-  pm.name,
-  pm.party,
-  pm.entry,
-  ROW_NUMBER() OVER (PARTITION BY pm.name ORDER BY pm.entry) AS period,
-  COALESCE(CURRENT_DATE - pm.entry, 0) AS days
-FROM
-  prime_minister pm
-  LEFT JOIN prime_minister pm2 ON pm.name = pm2.name AND pm.entry < pm2.entry
-ORDER BY days;
+
+;

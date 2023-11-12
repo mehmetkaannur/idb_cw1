@@ -11,19 +11,21 @@ SELECT person.name
 FROM person
 WHERE person.name NOT IN 
 (
-    SELECT prime_minister.name 
-    FROM prime_minister 
-    UNION 
     SELECT monarch.name 
     FROM monarch
+    UNION
+    SELECT prime_minister.name 
+    FROM prime_minister 
 )
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT DISTINCT monarch.name
-FROM monarch
-WHERE accession IS NOT NULL AND accession <> coronation
-ORDER BY monarch.name;
+SELECT m.name
+FROM monarch m
+JOIN monarch successor ON m.accession < successor.accession
+                      AND (m.coronation IS NULL OR m.coronation < successor.accession)
+                      AND (m.dod IS NULL OR m.dod > successor.accession)
+ORDER BY m.name;
 
 -- Q4 returns (house,name,accession)
 

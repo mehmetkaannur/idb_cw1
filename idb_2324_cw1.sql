@@ -91,6 +91,19 @@ ORDER BY mother.name, born, child.name;
 ;
        
 -- Q10 returns (name,entry,period,days)
-
-;
-
+WITH Periods AS 
+(
+  SELECT
+    name,
+    entry,
+    (
+      SELECT COUNT(*)
+      FROM prime_minister AS pm2
+      WHERE pm2.name = pm1.name AND pm2.entry <= pm1.entry
+    ) AS period,
+    DATEDIFF(CURRENT_DATE, entry) AS days
+  FROM prime_minister AS pm1
+)
+SELECT name, entry, period, days
+FROM Periods
+ORDER BY days;

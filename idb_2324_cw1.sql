@@ -20,16 +20,18 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT m.name
-FROM monarch m
-JOIN monarch successor ON m.accession < successor.accession
-                      AND (m.coronation IS NULL OR m.coronation < successor.accession)
-                      AND (m.dod IS NULL OR m.dod > successor.accession)
-ORDER BY m.name;
+
 
 -- Q4 returns (house,name,accession)
-
-;
+SELECT house, name, accession
+FROM monarch m1
+WHERE accession = ALL 
+(
+    SELECT MIN(m2.accession)
+    FROM monarch m2
+    WHERE m2.house = m1.house
+)
+ORDER BY accession;
 
 -- Q5 returns (name,role,start_date)
 

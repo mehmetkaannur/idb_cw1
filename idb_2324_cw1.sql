@@ -105,21 +105,29 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
--- use CTEs to define the term dates of monarchs and prime ministers
-WITH monarch_term AS (
-  SELECT m1.name as monarch, m1.accession as start_date, min(m2.accession) as end_date
-  FROM monarch m1 left join monarch m2 on m1.name <> m2.name and m1.accession < m2.accession
-  GROUP BY m1.name, m1.accession
-),
-pm_term AS (
-  SELECT p1.name as prime_minister, p1.entry as start_date, min(p2.entry) as end_date
-  FROM prime_minister p1 left join prime_minister p2 on p1.name <> p2.name and p1.entry < p2.entry
-  GROUP BY p1.name, p1.entry
+WITH MonarchTerm AS (
+    SELECT
+        m.name AS monarch_name,
+        m.accession AS monarch_accession,
+        COALESCE(MIN(m_next.accession), NULL) AS next_monarch_accession
+    FROM monarch m
+    LEFT JOIN monarch m_next ON m.accession < m_next.accession
+    GROUP BY m.name, m.accession
 )
--- join the two CTEs and filter the overlapping terms
-SELECT mt.monarch, pt.prime_minister
-FROM monarch_term mt join pm_term pt on mt.start_date <= pt.end_date and mt.end_date >= pt.start_date
-ORDER BY mt.start_date, pt.start_date;
+, PrimeMinisterTerm AS (
+    SELECT
+        pm.name AS prime_minister_name,
+        pm.entry AS prime_minister_entry,
+        COALESCE(MIN(pm_next.entry), NULL) AS next_prime_minister_entry
+    FROM prime_minister pm
+    LEFT JOIN prime_minister pm_next ON pm.entry < pm_next.entry
+    GROUP BY pm.name, pm.entry
+)
+SELECT mt.monarch_name, pmt.prime_minister_name
+FROM MonarchTerm mt
+JOIN PrimeMinisterTerm pmt ON (pmt.prime_minister_entry >= mt.monarch_accession AND pmt.prime_minister_entry < mt.next_monarch_accession)
+                           OR (pmt.prime_minister_entry >= mt.monarch_accession AND mt.next_monarch_accession IS NULL)
+ORDER BY mt.monarch_name, pmt.prime_minister_name;
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS

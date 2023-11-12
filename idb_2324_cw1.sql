@@ -105,11 +105,29 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT monarch.name, prime_minister.name
-FROM monarch
-INNER JOIN prime_minister ON monarch.accession <= prime_minister.entry 
-AND prime_minister.entry < COALESCE(monarch.dod, CURRENT_DATE)
-ORDER BY monarch.name, prime_minister.name;
+WITH MonarchTerm AS (
+    SELECT
+        m.name AS monarch_name,
+        m.accession AS monarch_accession,
+        COALESCE(MIN(m_next.accession), CURRENT_DATE) AS next_monarch_accession
+    FROM monarch m 
+    LEFT JOIN monarch m_next ON m.accession < m_next.accession
+    GROUP BY m.name, m.accession
+)
+, PrimeMinisterTerm AS (
+    SELECT
+        pm.name AS prime_minister_name,
+        pm.entry AS prime_minister_entry,
+        COALESCE(MIN(pm_next.entry), CURRENT_DATE) AS next_prime_minister_entry
+    FROM prime_minister pm
+    LEFT JOIN prime_minister pm_next ON pm.entry < pm_next.entry
+    GROUP BY pm.name, pm.entry
+)
+SELECT mt.monarch_name, pmt.prime_minister_name
+FROM MonarchTerm mt
+JOIN PrimeMinisterTerm pmt ON pmt.prime_minister_entry >= mt.monarch_accession
+                           AND pmt.prime_minister_entry < mt.next_monarch_accession
+ORDER BY mt.monarch_name, pmt.prime_minister_name;
 
 
 -- Q10 returns (name,entry,period,days)

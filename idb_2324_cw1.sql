@@ -108,8 +108,9 @@ ORDER BY mother, born, child;
 SELECT m.name AS monarch, p.name AS prime_minister
 FROM monarch m
 JOIN prime_minister p
-ON p.entry BETWEEN m.accession AND (SELECT MIN(accession) FROM monarch m2 WHERE m2.accession > m.accession)
-ORDER BY m.accession DESC, p.entry DESC;
+ON p.entry BETWEEN m.accession AND
+  COALESCE((SELECT MIN(accession) FROM monarch m2 WHERE m2.accession > m.accession), CURRENT_DATE)
+ORDER BY m.accession ASC, p.entry ASC;
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS

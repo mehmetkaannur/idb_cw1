@@ -27,7 +27,6 @@ LEFT JOIN monarch m_next ON m.accession < m_next.accession
 WHERE p.dod IS NULL OR p.dod > m_next.accession
 ORDER BY p.name;
 
-
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
@@ -80,39 +79,32 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-SELECT mother.name AS mother,
-       child.name AS child,
-       ROW_NUMBER() OVER (PARTITION BY mother.name ORDER BY child.dob) AS born
-FROM person AS mother
-LEFT JOIN person AS child ON mother.name = child.mother AND mother.gender = 'F'
-ORDER BY mother.name, born, child.dob, child.name;
+SELECT
+  mother.name AS mother,
+  child.name AS child,
+  COUNT(*) OVER (PARTITION BY mother.name ORDER BY child.dob ASC) AS born
+FROM person mother
+LEFT JOIN person child ON mother.name = child.mother
+GROUP BY mother.name, child.name
+ORDER BY mother.name ASC, born ASC;
+
 
 -- Q9 returns (monarch,prime_minister)
 SELECT m.name AS monarch, p.name AS prime_minister
-FROM monarch m
-JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(m.coronation, CURRENT_DATE)
-ORDER BY m.name, p.entry;
+FROM
+  monarch m
+  INNER JOIN prime_minister p ON m.accession <= p.entry AND (m.successor IS NULL OR m.successor > p.entry)
+ORDER BY m.name ASC, p.name ASC;
+
        
 -- Q10 returns (name,entry,period,days)
-WITH durations AS 
-(
-   SELECT
-      p.name, 
-      p.entry,
-      (CAST(CURRENT_DATE AS DATE) - CAST(p.entry AS DATE)) AS days,
-      ROW_NUMBER() OVER (PARTITION BY p.name ORDER BY p.entry ASC) AS period
-   FROM prime_minister p
-),
-current AS (
-   SELECT p.name, p.entry
-   FROM prime_minister p
-   WHERE NOT EXISTS (SELECT 1 FROM prime_minister p2 WHERE p2.entry > p.entry)
-)
 SELECT
-   c.name,
-   c.entry,
-   c.period,
-   COALESCE(d.days, (CAST(CURRENT_DATE AS DATE) - CAST(c.entry AS DATE))) AS days
-FROM current c
-LEFT JOIN durations d ON c.name = d.name AND c.entry = d.entry
-ORDER BY days ASC;
+  pm.name,
+  pm.party,
+  pm.entry,
+  ROW_NUMBER() OVER (PARTITION BY pm.name ORDER BY pm.entry) AS period,
+  COALESCE(CURRENT_DATE - pm.entry, 0) AS days
+FROM
+  prime_minister pm
+  LEFT JOIN prime_minister pm2 ON pm.name = pm2.name AND pm.entry < pm2.entry
+ORDER BY days;

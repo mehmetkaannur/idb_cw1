@@ -20,8 +20,15 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-
-;
+SELECT DISTINCT m1.name
+FROM monarch m1
+JOIN monarch m2 ON 
+(
+    m1.accession < m2.accession
+               AND (m1.coronation IS NULL OR m1.coronation < m2.accession)
+               AND (m1.dod IS NULL OR m1.dod < m2.accession)
+)
+ORDER BY m1.name;
 
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
@@ -83,23 +90,20 @@ LEFT JOIN person AS child ON mother.name = child.mother AND mother.gender = 'F'
 ORDER BY mother.name, born, child.dob, child.name;
 
 -- Q9 returns (monarch,prime_minister)
-
-;
+SELECT m.name AS monarch, p.name AS prime_minister
+FROM monarch m
+JOIN prime_minister p ON p.entry BETWEEN m.accession AND COALESCE(m.coronation, CURRENT_DATE)
+ORDER BY m.name, p.entry;
        
 -- Q10 returns (name,entry,period,days)
-WITH Periods AS 
-(
-  SELECT
-    name,
-    entry,
-    (
-      SELECT COUNT(*)
-      FROM prime_minister AS pm2
-      WHERE pm2.name = pm1.name AND pm2.entry <= pm1.entry
-    ) AS period,
-    DATEDIFF(CURRENT_DATE, entry) AS days
-  FROM prime_minister AS pm1
-)
-SELECT name, entry, period, days
-FROM Periods
+SELECT
+  pm.name,
+  pm.party,
+  pm.entry,
+  ROW_NUMBER() OVER (PARTITION BY pm.name ORDER BY pm.entry) AS period,
+  COALESCE(pm2.entry, CURRENT_DATE) AS end_date,
+  TIMESTAMPDIFF(DAY, pm.entry, COALESCE(pm2.entry, CURRENT_DATE)) AS days
+FROM
+  prime_minister pm
+  LEFT JOIN prime_minister pm2 ON pm.name = pm2.name AND pm.entry < pm2.entry
 ORDER BY days;

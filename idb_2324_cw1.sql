@@ -75,8 +75,16 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-
-;
+SELECT mother.name AS mother,
+       child.name AS child,
+       (SELECT COUNT(*)
+        FROM person AS c
+        WHERE c.mother = mother.name AND c.gender = 'F'
+              AND c.dob <= child.dob) AS born
+FROM person AS mother
+LEFT JOIN person AS child ON mother.name = child.mother
+WHERE mother.gender = 'F'
+ORDER BY mother.name, born, child.name;
 
 -- Q9 returns (monarch,prime_minister)
 

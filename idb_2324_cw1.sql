@@ -20,10 +20,9 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-SELECT monarch.name
+SELECT DISTINCT monarch.name
 FROM monarch
-WHERE accession IS NOT NULL 
-  AND accession <> coronation
+WHERE accession IS NOT NULL AND accession <> coronation
 ORDER BY monarch.name;
 
 -- Q4 returns (house,name,accession)

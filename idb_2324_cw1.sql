@@ -110,32 +110,6 @@ WITH MonarchTerm AS (
         m.name AS monarch_name,
         m.accession AS monarch_accession,
         COALESCE(MIN(m_next.accession), CURRENT_DATE) AS next_monarch_accession
-    FROM monarch m 
-    LEFT JOIN monarch m_next ON m.accession < m_next.accession
-    GROUP BY m.name, m.accession
-)
-, PrimeMinisterTerm AS (
-    SELECT
-        pm.name AS prime_minister_name,
-        pm.entry AS prime_minister_entry,
-        COALESCE(MIN(pm_next.entry), CURRENT_DATE) AS next_prime_minister_entry
-    FROM prime_minister pm
-    LEFT JOIN prime_minister pm_next ON pm.entry < pm_next.entry
-    GROUP BY pm.name, pm.entry
-)
-SELECT mt.monarch_name, pmt.prime_minister_name
-FROM MonarchTerm mt
-JOIN PrimeMinisterTerm pmt ON pmt.prime_minister_entry >= mt.monarch_accession
-                           AND pmt.prime_minister_entry < mt.next_monarch_accession
-ORDER BY mt.monarch_name, pmt.prime_minister_name;
-
-
--- Q10 returns (name,entry,period,days)
-WITH MonarchTerm AS (
-    SELECT
-        m.name AS monarch_name,
-        m.accession AS monarch_accession,
-        COALESCE(MIN(m_next.accession), CURRENT_DATE) AS next_monarch_accession
     FROM monarch m
     LEFT JOIN monarch m_next ON m.accession < m_next.accession
     GROUP BY m.name, m.accession
@@ -154,3 +128,30 @@ FROM MonarchTerm mt
 JOIN PrimeMinisterTerm pmt ON (pmt.prime_minister_entry >= mt.monarch_accession AND pmt.prime_minister_entry < mt.next_monarch_accession)
                            OR (pmt.prime_minister_entry >= mt.monarch_accession AND mt.next_monarch_accession IS NULL)
 ORDER BY mt.monarch_name, pmt.prime_minister_name;
+
+-- Q10 returns (name,entry,period,days)
+WITH EndOfTerm AS
+(
+  SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS term_end
+  FROM prime_minister
+),
+DayCounter AS 
+(
+  SELECT name, party, entry, term_end, 
+  CASE 
+    WHEN term_end IS NULL THEN
+      CAST(CURRENT_DATE AS date) - CAST(entry AS date)
+    ELSE
+      CAST(term_end AS date) - CAST(entry AS date)
+  END AS days
+  FROM EndOfTerm
+),
+PeriodCounter AS 
+(
+  SELECT name, party, entry, term_end, days, 
+  ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
+  FROM DayCounter
+)
+SELECT name, entry, period, days
+FROM PeriodCounter
+ORDER BY days;

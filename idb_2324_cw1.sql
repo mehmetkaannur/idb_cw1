@@ -105,8 +105,11 @@ WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndCh
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-
-;
+SELECT m.name AS monarch, p.name AS prime_minister
+FROM monarch m
+JOIN prime_minister p
+ON p.entry BETWEEN m.accession AND (SELECT MIN(accession) FROM monarch m2 WHERE m2.accession > m.accession)
+ORDER BY m.accession DESC, p.entry DESC;
 
 -- Q10 returns (name,entry,period,days)
 WITH EndOfTerm AS

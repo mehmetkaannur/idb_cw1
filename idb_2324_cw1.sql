@@ -108,16 +108,16 @@ ORDER BY mother, born, child;
 SELECT DISTINCT MonarchTable.name AS monarch, PMtable.name AS prime_minister
 FROM
 (
-  SELECT name, accession, COALESCE(LEAD(accession) OVER (ORDER BY accession), CURRENT_DATE) AS next_accession
+  SELECT name, accession, COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS next_accession
   FROM monarch
 ) AS MonarchTable
 JOIN 
 (
-  SELECT name, entry, COALESCE(LEAD(entry) over (ORDER BY entry), CURRENT_DATE) AS next_entry
+  SELECT name, entry, COALESCE(LEAD(entry) over (ORDER BY entry), '9999-12-31') AS next_entry
   FROM prime_minister
 ) AS PMtable
 ON (PMtable.entry >= MonarchTable.accession AND PMtable.entry < MonarchTable.next_accession)
-OR (PMtable.entry <= MonarchTable.accession AND PMtable.entry > MonarchTable.next_accession)
+OR (PMtable.entry <= MonarchTable.accession AND PMtable.next_entry > MonarchTable.next_accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)

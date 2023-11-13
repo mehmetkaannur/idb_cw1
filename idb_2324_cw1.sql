@@ -43,9 +43,9 @@ SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
 WHERE accession = ALL
 (
-    SELECT MIN(m2.accession)
-    FROM monarch m2
-    WHERE m2.house = m1.house
+  SELECT MIN(m2.accession)
+  FROM monarch m2
+  WHERE m2.house = m1.house
 )
 ORDER BY accession;
 
@@ -95,8 +95,10 @@ WITH MotherAndChild AS (
   FROM person
   WHERE person.mother IS NOT NULL
 )
-SELECT MotherAndChild.mother, MotherAndChild.child, 
-RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
+SELECT 
+  MotherAndChild.mother, 
+  MotherAndChild.child, 
+  RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
 FROM MotherAndChild
 UNION
 SELECT person.name AS mother, NULL AS child, NULL AS born
@@ -108,12 +110,18 @@ ORDER BY mother, born, child;
 SELECT DISTINCT MonarchTable.name AS monarch, PMtable.name AS prime_minister
 FROM
 (
-  SELECT name, accession, COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS next_accession
+  SELECT 
+    name, 
+    accession, 
+    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS next_accession
   FROM monarch
 ) AS MonarchTable
 JOIN 
 (
-  SELECT name, entry, COALESCE(LEAD(entry) over (ORDER BY entry), '9999-12-31') AS next_entry
+  SELECT 
+    name, 
+    entry, 
+    COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS next_entry
   FROM prime_minister
 ) AS PMtable
 ON (PMtable.entry >= MonarchTable.accession AND PMtable.entry < MonarchTable.next_accession)
@@ -130,7 +138,8 @@ DayCounter AS
 (
   SELECT name, party, entry, term_end, 
   CASE 
-    WHEN term_end IS NULL THEN
+    WHEN term_end IS NULL
+    THEN
       CAST(CURRENT_DATE AS date) - CAST(entry AS date)
     ELSE
       CAST(term_end AS date) - CAST(entry AS date)
@@ -139,8 +148,13 @@ DayCounter AS
 ),
 PeriodCounter AS 
 (
-  SELECT name, party, entry, term_end, days, 
-  ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
+  SELECT 
+    name, 
+    party, 
+    entry, 
+    term_end, 
+    days, 
+    ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
   FROM DayCounter
 )
 SELECT name, entry, period, days

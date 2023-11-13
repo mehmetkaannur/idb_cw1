@@ -78,10 +78,14 @@ WITH PartyCounter AS
 (
   SELECT
     party,
-    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1700 AND 1799) AS eighteenth,
-    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1800 AND 1899) AS nineteenth,
-    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1900 AND 1999) AS twentieth,
-    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 2000 AND 2099) AS twentyfirst
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1700 AND 1799) 
+      AS eighteenth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1800 AND 1899) 
+      AS nineteenth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1900 AND 1999) 
+      AS twentieth,
+    COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 2000 AND 2099) 
+      AS twentyfirst
   FROM prime_minister
   GROUP BY party
 )
@@ -98,12 +102,14 @@ WITH MotherAndChild AS (
 SELECT 
   MotherAndChild.mother, 
   MotherAndChild.child, 
-  RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) AS born
+  RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) 
+    AS born
 FROM MotherAndChild
 UNION
 SELECT person.name AS mother, NULL AS child, NULL AS born
 FROM person
-WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherAndChild)
+WHERE person.gender = 'F' 
+  AND person.name NOT IN (SELECT mother FROM MotherAndChild)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
@@ -113,7 +119,8 @@ FROM
   SELECT 
     name, 
     accession, 
-    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS next_accession
+    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') 
+      AS next_accession
   FROM monarch
 ) AS MonarchTable
 JOIN 
@@ -124,8 +131,10 @@ JOIN
     COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS next_entry
   FROM prime_minister
 ) AS PMtable
-ON (PMtable.entry >= MonarchTable.accession AND PMtable.entry < MonarchTable.next_accession)
-OR (PMtable.entry <= MonarchTable.accession AND PMtable.next_entry > MonarchTable.accession)
+ON (PMtable.entry >= MonarchTable.accession 
+    AND PMtable.entry < MonarchTable.next_accession)
+  OR (PMtable.entry <= MonarchTable.accession 
+    AND PMtable.next_entry > MonarchTable.accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)

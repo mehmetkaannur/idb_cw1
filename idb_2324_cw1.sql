@@ -9,8 +9,7 @@ ORDER BY p1.name;
 -- Q2 returns (name)
 SELECT person.name
 FROM person
-WHERE person.name NOT IN 
-(
+WHERE person.name NOT IN (
     SELECT monarch.name 
     FROM monarch
     UNION
@@ -20,8 +19,7 @@ WHERE person.name NOT IN
 ORDER BY person.name;
 
 -- Q3 returns (name)
-WITH KingsAndQueens AS 
-(
+WITH KingsAndQueens AS (
   SELECT p.name, p.dod, m.accession, m.house
   FROM person p RIGHT JOIN monarch m
   ON p.name = m.name
@@ -29,8 +27,7 @@ WITH KingsAndQueens AS
 )
 SELECT kaq1.name
 FROM KingsAndQueens kaq1
-WHERE EXISTS 
-(
+WHERE EXISTS (
   SELECT 1
   FROM KingsAndQueens kaq2
   WHERE kaq2.accession > kaq1.accession
@@ -41,8 +38,7 @@ ORDER BY kaq1.name;
 -- Q4 returns (house,name,accession)
 SELECT m1.house, m1.name, m1.accession
 FROM monarch m1
-WHERE accession = ALL
-(
+WHERE accession = ALL(
   SELECT MIN(m2.accession)
   FROM monarch m2
   WHERE m2.house = m1.house
@@ -63,8 +59,7 @@ FROM prime_minister
 ORDER BY start_date;
 
 -- Q6 returns (first_name,popularity)
-WITH NameAndPopularity AS 
-(
+WITH NameAndPopularity AS (
   SELECT SPLIT_PART(name, ' ', 1) AS first_name, COUNT(*) AS popularity
   FROM person
   GROUP BY first_name HAVING COUNT(*) > 1
@@ -74,10 +69,8 @@ FROM NameAndPopularity nap
 ORDER BY nap.popularity DESC, nap.first_name;
 
 -- Q7 returns (party,seventeenth,eighteenth,nineteenth,twentieth,twentyfirst)
-WITH PartyCounter AS 
-(
-  SELECT
-    party,
+WITH PartyCounter AS (
+  SELECT party,
     COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1700 AND 1799) 
       AS eighteenth,
     COUNT(*) FILTER(WHERE EXTRACT(YEAR FROM entry) BETWEEN 1800 AND 1899) 
@@ -94,57 +87,44 @@ FROM PartyCounter pc
 ORDER BY pc.party; 
 
 -- Q8 returns (mother,child,born)
-WITH MotherAndChild AS (
+WITH MotherChild AS (
   SELECT person.mother AS mother, person.name AS child, person.dob AS dob
   FROM person
   WHERE person.mother IS NOT NULL
 )
-SELECT 
-  MotherAndChild.mother, 
-  MotherAndChild.child, 
-  RANK() OVER (PARTITION BY MotherAndChild.mother ORDER BY MotherAndChild.dob) 
-    AS born
-FROM MotherAndChild
+SELECT MotherChild.mother, MotherChild.child, 
+  RANK() OVER (PARTITION BY MotherChild.mother ORDER BY MotherChild.dob) AS born
+FROM MotherChild
 UNION
 SELECT person.name AS mother, NULL AS child, NULL AS born
 FROM person
-WHERE person.gender = 'F' 
-  AND person.name NOT IN (SELECT mother FROM MotherAndChild)
+WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherChild)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
 SELECT DISTINCT MonarchTable.name AS monarch, PMtable.name AS prime_minister
-FROM
-(
-  SELECT 
-    name, 
-    accession, 
-    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') 
-      AS next_accession
+FROM(
+  SELECT name, accession, 
+    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS NextAccession
   FROM monarch
 ) AS MonarchTable
-JOIN 
-(
-  SELECT 
-    name, 
-    entry, 
-    COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS next_entry
+JOIN (
+  SELECT name, entry, 
+    COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS NextEntry
   FROM prime_minister
 ) AS PMtable
 ON (PMtable.entry >= MonarchTable.accession 
-    AND PMtable.entry < MonarchTable.next_accession)
+    AND PMtable.entry < MonarchTable.NextAccession)
   OR (PMtable.entry <= MonarchTable.accession 
-    AND PMtable.next_entry > MonarchTable.accession)
+    AND PMtable.NextEntry > MonarchTable.accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)
-WITH EndOfTerm AS
-(
+WITH EndOfTerm AS (
   SELECT name, party, entry, LEAD(entry) OVER (ORDER BY entry) AS term_end
   FROM prime_minister
 ),
-DayCounter AS 
-(
+DayCounter AS (
   SELECT name, party, entry, term_end, 
   CASE 
     WHEN term_end IS NULL
@@ -155,8 +135,7 @@ DayCounter AS
   END AS days
   FROM EndOfTerm
 ),
-PeriodCounter AS 
-(
+PeriodCounter AS (
   SELECT 
     name, 
     party, 

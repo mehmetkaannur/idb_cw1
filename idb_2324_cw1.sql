@@ -102,19 +102,22 @@ WHERE p2.gender = 'F' AND p2.name NOT IN (SELECT mother FROM MotherChild)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT DISTINCT mt.name AS monarch, pmt.name AS prime_minister
+SELECT DISTINCT MonarchTable.name AS monarch, PMtable.name AS prime_minister
 FROM(
   SELECT name, accession, 
-    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS NextAccession
+    COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') 
+      AS NextAccession
   FROM monarch
-) AS MonarchTable mt
+) AS MonarchTable
 JOIN (
   SELECT name, entry, 
     COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS NextEntry
   FROM prime_minister
-) AS PMtable pmt
-ON (pmt.entry >= mt.accession AND pmt.entry < mt.NextAccession)
-  OR (pmt.entry <= mt.accession AND pmt.NextEntry > mt.accession)
+) AS PMtable
+ON (PMtable.entry >= MonarchTable.accession 
+    AND PMtable.entry < MonarchTable.NextAccession)
+  OR (PMtable.entry <= MonarchTable.accession 
+    AND PMtable.NextEntry > MonarchTable.accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)

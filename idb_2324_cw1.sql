@@ -117,7 +117,7 @@ JOIN
   FROM prime_minister
 ) AS PMtable
 ON (PMtable.entry >= MonarchTable.accession AND PMtable.entry < MonarchTable.next_accession)
-OR (PMtable.entry <= MonarchTable.accession AND PMtable.next_entry > MonarchTable.next_accession)
+OR (PMtable.entry <= MonarchTable.accession AND PMtable.next_entry > MonarchTable.accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)

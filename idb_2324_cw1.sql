@@ -46,16 +46,16 @@ WHERE accession = ALL(
 ORDER BY accession;
 
 -- Q5 returns (name,role,start_date)
-SELECT monarch.name, 'Monarch' AS role, monarch.accession AS start_date
-FROM monarch
+SELECT m1.name, 'Monarch' AS role, m1.accession AS start_date
+FROM monarch m1
 WHERE house IS NOT NULL
 UNION
-SELECT monarch.name, 'Lord Protector' AS role, monarch.accession AS start_date
-FROM monarch
+SELECT m2.name, 'Lord Protector' AS role, m2.accession AS start_date
+FROM monarch m2
 WHERE house IS NULL
 UNION
-SELECT prime_minister.name, 'Prime Minister' AS role, prime_minister.entry AS start_date
-FROM prime_minister
+SELECT pm1.name, 'Prime Minister' AS role, pm1.entry AS start_date
+FROM prime_minister pm1
 ORDER BY start_date;
 
 -- Q6 returns (first_name,popularity)
@@ -88,35 +88,33 @@ ORDER BY pc.party;
 
 -- Q8 returns (mother,child,born)
 WITH MotherChild AS (
-  SELECT person.mother AS mother, person.name AS child, person.dob AS dob
-  FROM person
-  WHERE person.mother IS NOT NULL
+  SELECT p1.mother AS mother, p1.name AS child, p1.dob AS dob
+  FROM person p1
+  WHERE p1.mother IS NOT NULL
 )
-SELECT MotherChild.mother, MotherChild.child, 
-  RANK() OVER (PARTITION BY MotherChild.mother ORDER BY MotherChild.dob) AS born
-FROM MotherChild
+SELECT mc.mother, mc.child, 
+  RANK() OVER (PARTITION BY mc.mother ORDER BY mc.dob) AS born
+FROM MotherChild mc
 UNION
-SELECT person.name AS mother, NULL AS child, NULL AS born
-FROM person
-WHERE person.gender = 'F' AND person.name NOT IN (SELECT mother FROM MotherChild)
+SELECT p2.name AS mother, NULL AS child, NULL AS born
+FROM person p2
+WHERE p2.gender = 'F' AND p2.name NOT IN (SELECT mother FROM MotherChild)
 ORDER BY mother, born, child;
 
 -- Q9 returns (monarch,prime_minister)
-SELECT DISTINCT MonarchTable.name AS monarch, PMtable.name AS prime_minister
+SELECT DISTINCT mt.name AS monarch, pmt.name AS prime_minister
 FROM(
   SELECT name, accession, 
     COALESCE(LEAD(accession) OVER (ORDER BY accession), '9999-12-31') AS NextAccession
   FROM monarch
-) AS MonarchTable
+) AS MonarchTable mt
 JOIN (
   SELECT name, entry, 
     COALESCE(LEAD(entry) OVER (ORDER BY entry), '9999-12-31') AS NextEntry
   FROM prime_minister
-) AS PMtable
-ON (PMtable.entry >= MonarchTable.accession 
-    AND PMtable.entry < MonarchTable.NextAccession)
-  OR (PMtable.entry <= MonarchTable.accession 
-    AND PMtable.NextEntry > MonarchTable.accession)
+) AS PMtable pmt
+ON (pmt.entry >= mt.accession AND pmt.entry < mt.NextAccession)
+  OR (pmt.entry <= mt.accession AND pmt.NextEntry > mt.accession)
 ORDER BY monarch, prime_minister;
 
 -- Q10 returns (name,entry,period,days)
@@ -136,12 +134,7 @@ DayCounter AS (
   FROM EndOfTerm
 ),
 PeriodCounter AS (
-  SELECT 
-    name, 
-    party, 
-    entry, 
-    term_end, 
-    days, 
+  SELECT name, party, entry, term_end, days, 
     ROW_NUMBER() OVER (PARTITION BY name ORDER BY entry) AS period
   FROM DayCounter
 )
